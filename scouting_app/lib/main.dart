@@ -226,7 +226,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       child: TextButton(
                         onPressed: (() {
                           String data =
-                              "{'teamNumber': $teamNumber,'defenseScore': $defensevalue,'offenseScore': $offensevalue,'auto': {'autoMove': $movedInAuto,'autoBottomScore': $autoBottomScore,'autoMiddleScore': $autoMiddleScore,'autoTopScore': $autoTopScore,'autoDockedState': $autoDockState},'teleop': {'scoredBoth': $scoredBoth,'teleopBottomScore': $teleopBottomScore,'teleopMiddleScore': $teleopMiddleScore,'teleopTopScore': $teleopTopScore,'teleopDockState': $endDockState,}, \n";
+                              "      {'teamNumber': '$teamNumber','defenseScore': $defensevalue,'offenseScore': $offensevalue,'auto': {'autoMove': $movedInAuto,'autoBottomScore': $autoBottomScore,'autoMiddleScore': $autoMiddleScore,'autoTopScore': $autoTopScore,'autoDockedState': '$autoDockState'},'teleop': {'scoredBoth': $scoredBoth,'teleopBottomScore': $teleopBottomScore,'teleopMiddleScore': $teleopMiddleScore,'teleopTopScore': $teleopTopScore,'teleopDockState': '$endDockState'}, \n";
                           readFile().then((String content) {
                             if (content.contains("matches")) {
                               content =
