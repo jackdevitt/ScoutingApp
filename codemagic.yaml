@@ -1,13 +1,13 @@
 workflows:
 
     ios-workflow-id:
-        name: iOS
+      name: iOS
 
-        enviornment: 
-          ios_signing:
-            distribution_type: development
+      enviornment: 
+        ios_signing:
+          distribution_type: development
 
-        scripts:
-          - name: Build for IOS
-            script: flutter build iOS
+      scripts:
+        - name: Build for IOS
+        script: flutter build iOS
         # ......
