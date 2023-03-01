@@ -1,8 +1,8 @@
 // ignore_for_file: prefer_const_constructors
-
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:sizer/sizer.dart';
 
 void main() {
   runApp(const MyApp());
@@ -141,8 +141,8 @@ class _MyHomePageState extends State<MyHomePage> {
         title: Text(widget.title),
       ),
       body: SizedBox(
-        width: double.maxFinite,
-        height: double.maxFinite,
+        width: 90.w,
+        height: 90.h,
         // Center is a layout widget. It takes a single child and positions it
         // in the middle of the parent.
         child: Column(

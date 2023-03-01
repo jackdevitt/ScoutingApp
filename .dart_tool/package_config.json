@@ -164,6 +164,12 @@
       "languageVersion": "2.14"
     },
     {
+      "name": "sizer",
+      "rootUri": "file:///C:/Users/jackt/AppData/Local/Pub/Cache/hosted/pub.dev/sizer-2.0.15",
+      "packageUri": "lib/",
+      "languageVersion": "2.12"
+    },
+    {
       "name": "sky_engine",
       "rootUri": "file:///C:/Users/jackt/flutter/bin/cache/pkg/sky_engine",
       "packageUri": "lib/",
@@ -206,6 +212,18 @@
       "languageVersion": "2.18"
     },
     {
+      "name": "typed_data",
+      "rootUri": "file:///C:/Users/jackt/AppData/Local/Pub/Cache/hosted/pub.dev/typed_data-1.3.1",
+      "packageUri": "lib/",
+      "languageVersion": "2.12"
+    },
+    {
+      "name": "universal_io",
+      "rootUri": "file:///C:/Users/jackt/AppData/Local/Pub/Cache/hosted/pub.dev/universal_io-2.2.0",
+      "packageUri": "lib/",
+      "languageVersion": "2.15"
+    },
+    {
       "name": "vector_math",
       "rootUri": "file:///C:/Users/jackt/AppData/Local/Pub/Cache/hosted/pub.dev/vector_math-2.1.4",
       "packageUri": "lib/",
@@ -230,7 +248,7 @@
       "languageVersion": "2.19"
     }
   ],
-  "generated": "2023-03-01T00:16:56.486519Z",
+  "generated": "2023-03-01T22:35:45.036878Z",
   "generator": "pub",
   "generatorVersion": "2.19.2"
 }
