@@ -4,7 +4,7 @@ workflows:
       name: iOS
 
       scripts:
-        - name: Build for IOS
+        - name: IOS
         script: flutter build iOS
 
       enviornment: 
