@@ -4,5 +4,5 @@ workflows:
         name: iOS
         scripts:
           - name: Build for IOS
-            script: flutter build ios
+            script: flutter run -d Blue's iPad
         # ......
