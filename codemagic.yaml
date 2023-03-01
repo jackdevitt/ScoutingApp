@@ -3,5 +3,6 @@ workflows:
     ios-workflow-id:
         name: iOS
         scripts:
-          - flutter build ios
+          - name: Build for IOS
+            script: flutter build ios
         # ......
