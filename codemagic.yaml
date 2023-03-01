@@ -3,11 +3,11 @@ workflows:
     ios-workflow-id:
       name: iOS
 
-      enviornment: 
-        ios_signing:
-          distribution_type: development
-
       scripts:
         - name: Build for IOS
         script: flutter build iOS
+
+      enviornment: 
+        ios_signing:
+          distribution_type: development
         # ......
