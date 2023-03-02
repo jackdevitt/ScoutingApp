@@ -2,7 +2,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:sizer/sizer.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 void main() {
   runApp(const MyApp());
@@ -51,28 +51,38 @@ class MyHomePage extends StatefulWidget {
   State<MyHomePage> createState() => _MyHomePageState();
 }
 
-Future<String> get _localPath async {
-  final directory = await getApplicationDocumentsDirectory();
-
-  return directory.path;
-}
-
-// ignore: unused_element
-Future<File> get _localFile async {
-  final path = await _localPath;
-  return File("$path/info.json");
+createFile() async {
+  await Permission.storage.request();
+  if (await Permission.manageExternalStorage.request().isGranted) {
+    Directory? localDir = await getExternalStorageDirectory();
+    String localPath = localDir!.path;
+    File file = File('$localPath/info.json');
+    await file.create();
+  }
 }
 
 Future<File> writeData(String data) async {
-  final file = await _localFile;
-  return file.writeAsString(data);
+  await Permission.storage.request();
+  if (await Permission.manageExternalStorage.request().isGranted) {
+    Directory? localDir = await getExternalStorageDirectory();
+    String localPath = localDir!.path;
+    File file = File('$localPath/info.json');
+    return file.writeAsString(data);
+  }
+  return File("File not found");
 }
 
 Future<String> readFile() async {
   try {
-    final file = await _localFile;
-    final contents = await file.readAsString();
-    return contents;
+    await Permission.storage.request();
+    if (await Permission.manageExternalStorage.request().isGranted) {
+      Directory? localDir = await getExternalStorageDirectory();
+      String localPath = localDir!.path;
+      File file = File('$localPath/info.json');
+      final contents = await file.readAsString();
+      return contents;
+    }
+    return "An Error occured";
   } catch (e) {
     return "an Error occured";
   }
@@ -134,429 +144,432 @@ class _MyHomePageState extends State<MyHomePage> {
     // The Flutter framework has been optimized to make rerunning build methods
     // fast, so that you can just rebuild anything that needs updating rather
     // than having to individually change instances of widgets.
+    createFile();
     return Scaffold(
-      appBar: AppBar(
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
-      ),
-      body: SizedBox(
-        width: 90.w,
-        height: 90.h,
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          // Invoke "debug painting" (press "p" in the console, choose the
-          // "Toggle Debug Paint" action from the Flutter Inspector in Android
-          // Studio, or the "Toggle Debug Paint" command in Visual Studio Code)
-          // to see the wireframe for each widget.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          children: <Widget>[
-            Padding(padding: EdgeInsets.all(25)),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: <Widget>[
-                Column(
-                  // ignore: prefer_const_literals_to_create_immutables
-                  children: <Widget>[
-                    Text(
-                      'Team number: ',
-                    ),
-                    SizedBox(
-                      width: 300.0,
-                      child: TextField(
-                        onChanged: (text) {
-                          teamNumber = text;
-                        },
-                        controller: nameC,
-                        decoration: InputDecoration(
-                          border: OutlineInputBorder(),
-                          hintText: 'Example (1086)',
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                Column(
-                  children: [
-                    Text("Score Defense (1-5)"),
-                    DropdownButton(
-                        value: defensevalue,
-                        items: items.map((String items) {
-                          return DropdownMenuItem(
-                            value: items,
-                            child: Text(items),
-                          );
-                        }).toList(),
-                        onChanged: (String? newValue) {
-                          setState(() {
-                            defensevalue = newValue!;
-                          });
-                        }),
-                  ],
-                ),
-                Column(
-                  children: [
-                    Text("Score Offense (1-5)"),
-                    DropdownButton(
-                        value: offensevalue,
-                        items: items.map((String items) {
-                          return DropdownMenuItem(
-                            value: items,
-                            child: Text(items),
-                          );
-                        }).toList(),
-                        onChanged: (String? newValue) {
-                          setState(() {
-                            offensevalue = newValue!;
-                          });
-                        }),
-                  ],
-                ),
-                Column(
-                  children: [
-                    SizedBox(
-                      width: 200.0,
-                      height: 100.0,
-                      child: TextButton(
-                        onPressed: (() {
-                          String data =
-                              "      {'teamNumber': '$teamNumber','defenseScore': $defensevalue,'offenseScore': $offensevalue,'auto': {'autoMove': $movedInAuto,'autoBottomScore': $autoBottomScore,'autoMiddleScore': $autoMiddleScore,'autoTopScore': $autoTopScore,'autoDockedState': '$autoDockState'},'teleop': {'scoredBoth': $scoredBoth,'teleopBottomScore': $teleopBottomScore,'teleopMiddleScore': $teleopMiddleScore,'teleopTopScore': $teleopTopScore,'teleopDockState': '$endDockState'}, \n";
-                          readFile().then((String content) {
-                            if (content.contains("matches")) {
-                              content =
-                                  content.substring(0, content.length - 2);
-                              writeData(content + data + "\n" + "}");
-                            } else {
-                              writeData("matches {" + "\n" + data + "}" + "\n");
-                            }
-                          });
-                          setState(() {
-                            teleopTopScore = 0;
-                            teleopMiddleScore = 0;
-                            teleopBottomScore = 0;
-                            autoTopScore = 0;
-                            autoMiddleScore = 0;
-                            autoBottomScore = 0;
-                            movedInAuto = false;
-                            scoredBoth = false;
-                            defensevalue = "1";
-                            offensevalue = "1";
-                            autoDockState = "neither";
-                            endDockState = "neither";
-                            teamNumber = "";
-                            nameC.text = teamNumber;
-                          });
-                          setState(() {
-                            buttonMessage = "Success";
-                          });
-                          Future.delayed(const Duration(seconds: 1), () {
-                            setState(() {
-                              buttonMessage = "Submit";
-                            });
-                          });
-                        }),
-                        child: Text(
-                          buttonMessage,
-                          style: TextStyle(fontSize: 30),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: <Widget>[
-                Column(
-                  children: <Widget>[
-                    Padding(padding: EdgeInsets.all(25)),
-                    Text(
-                      'Did the robot move in Auto',
-                      style: TextStyle(fontSize: 20),
-                    ),
-                    Text(
-                      autoMoveMessage,
-                    ),
-                    Switch(
-                      value: movedInAuto,
-                      onChanged: (bool value) {
-                        setState(() => movedInAuto = value);
-                        if (movedInAuto) {
-                          autoMoveMessage = autoMoveConfirm;
-                        } else {
-                          autoMoveMessage = autoMoveDeny;
-                        }
-                      },
-                    ),
-                    Padding(padding: EdgeInsets.all(25)),
-                    Text(
-                      'Did the robot dock in Auto',
-                      style: TextStyle(fontSize: 20),
-                    ),
-                    DropdownButton(
-                        value: autoDockState,
-                        items: autoDockItems.map((String autoDockItems) {
-                          return DropdownMenuItem(
-                            value: autoDockItems,
-                            child: Text(autoDockItems),
-                          );
-                        }).toList(),
-                        onChanged: (String? newValue) {
-                          setState(() {
-                            autoDockState = newValue!;
-                          });
-                        }),
-                  ],
-                ),
-                Column(
-                  children: <Widget>[
-                    Padding(padding: EdgeInsets.all(25)),
-                    Text(
-                      'Pieces scored in Bottom in Auto',
-                    ),
-                    Text(
-                      '$autoBottomScore',
-                      style: TextStyle(fontSize: 30),
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: <Widget>[
-                        TextButton(
-                          onPressed: () {
-                            if (autoBottomScore > 0) {
-                              setState(() {
-                                autoBottomScore--;
-                              });
-                            }
-                          },
-                          child: Text("Decrease Score"),
-                        ),
-                        TextButton(
-                          onPressed: () {
-                            setState(() {
-                              autoBottomScore++;
-                            });
-                          },
-                          child: Text("Increase Score"),
-                        ),
-                      ],
-                    ),
-                    Padding(padding: EdgeInsets.all(25)),
-                    Text(
-                      'Pieces scored in Middle in Auto',
-                    ),
-                    Text(
-                      '$autoMiddleScore',
-                      style: TextStyle(fontSize: 30),
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: <Widget>[
-                        TextButton(
-                          onPressed: () {
-                            if (autoMiddleScore > 0) {
-                              setState(() {
-                                autoMiddleScore--;
-                              });
-                            }
-                          },
-                          child: Text("Decrease Score"),
-                        ),
-                        TextButton(
-                          onPressed: () {
-                            setState(() {
-                              autoMiddleScore++;
-                            });
-                          },
-                          child: Text("Increase Score"),
-                        ),
-                      ],
-                    ),
-                    Padding(padding: EdgeInsets.all(25)),
-                    Text(
-                      'Pieces scored in Top in Auto',
-                    ),
-                    Text(
-                      '$autoTopScore',
-                      style: TextStyle(fontSize: 30),
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: <Widget>[
-                        TextButton(
-                          onPressed: () {
-                            if (autoTopScore > 0) {
-                              setState(() {
-                                autoTopScore--;
-                              });
-                            }
-                          },
-                          child: Text("Decrease Score"),
-                        ),
-                        TextButton(
-                          onPressed: () {
-                            setState(() {
-                              autoTopScore++;
-                            });
-                          },
-                          child: Text("Increase Score"),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-                Column(
-                  children: <Widget>[
-                    Padding(padding: EdgeInsets.all(25)),
-                    Text(
-                      'Pieces scored in Bottom in Teleop',
-                    ),
-                    Text(
-                      '$teleopBottomScore',
-                      style: TextStyle(fontSize: 30),
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: <Widget>[
-                        TextButton(
-                          onPressed: () {
-                            if (teleopBottomScore > 0) {
-                              setState(() {
-                                teleopBottomScore--;
-                              });
-                            }
-                          },
-                          child: Text("Decrease Score"),
-                        ),
-                        TextButton(
-                          onPressed: () {
-                            setState(() {
-                              teleopBottomScore++;
-                            });
-                          },
-                          child: Text("Increase Score"),
-                        ),
-                      ],
-                    ),
-                    Padding(padding: EdgeInsets.all(25)),
-                    Text(
-                      'Pieces scored in Middle in Teleop',
-                    ),
-                    Text(
-                      '$teleopMiddleScore',
-                      style: TextStyle(fontSize: 30),
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: <Widget>[
-                        TextButton(
-                          onPressed: () {
-                            if (teleopMiddleScore > 0) {
-                              setState(() {
-                                teleopMiddleScore--;
-                              });
-                            }
-                          },
-                          child: Text("Decrease Score"),
-                        ),
-                        TextButton(
-                          onPressed: () {
-                            setState(() {
-                              teleopMiddleScore++;
-                            });
-                          },
-                          child: Text("Increase Score"),
-                        ),
-                      ],
-                    ),
-                    Padding(padding: EdgeInsets.all(25)),
-                    Text(
-                      'Pieces scored in Top in Teleop',
-                    ),
-                    Text(
-                      '$teleopTopScore',
-                      style: TextStyle(fontSize: 30),
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: <Widget>[
-                        TextButton(
-                          onPressed: () {
-                            if (teleopTopScore > 0) {
-                              setState(() {
-                                teleopTopScore--;
-                              });
-                            }
-                          },
-                          child: Text("Decrease Score"),
-                        ),
-                        TextButton(
-                          onPressed: () {
-                            setState(() {
-                              teleopTopScore++;
-                            });
-                          },
-                          child: Text("Increase Score"),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-                Column(
-                  children: [
-                    Padding(padding: EdgeInsets.all(25)),
-                    Text(
-                      'Did the robot score both Cube and Cone',
-                      style: TextStyle(fontSize: 20),
-                    ),
-                    Text(
-                      scoredMessage,
-                    ),
-                    Switch(
-                      value: scoredBoth,
-                      onChanged: (bool value) {
-                        setState(() => scoredBoth = value);
-                        if (scoredBoth) {
-                          scoredMessage = scoredConfirm;
-                        } else {
-                          scoredMessage = scoredDeny;
-                        }
-                      },
-                    ),
-                    Padding(padding: EdgeInsets.all(25)),
-                    Text("Did the robot dock in endgame"),
-                    DropdownButton(
-                        value: endDockState,
-                        items: endDockItems.map((String items) {
-                          return DropdownMenuItem(
-                            value: items,
-                            child: Text(items),
-                          );
-                        }).toList(),
-                        onChanged: (String? newValue) {
-                          setState(() {
-                            endDockState = newValue!;
-                          });
-                        }),
-                  ],
-                ),
-              ],
-            ),
-          ],
+        appBar: AppBar(
+          title: Text(widget.title),
         ),
-      ),
-    );
-// This trailing comma makes auto-formatting nicer for build methods.
+        body: SizedBox.expand(
+          // Center is a layout widget. It takes a single child and positions it
+          // in the middle of the parent.
+          child: Center(
+            child: Column(
+              // Column is also a layout widget. It takes a list of children and
+              // arranges them vertically. By default, it sizes itself to fit its
+              // children horizontally, and tries to be as tall as its parent.
+              // Invoke "debug painting" (press "p" in the console, choose the
+              // "Toggle Debug Paint" action from the Flutter Inspector in Android
+              // Studio, or the "Toggle Debug Paint" command in Visual Studio Code)
+              // to see the wireframe for each widget.
+              //
+              // Column has various properties to control how it sizes itself and
+              // how it positions its children. Here we use mainAxisAlignment to
+              // center the children vertically; the main axis here is the vertical
+              // axis because Columns are vertical (the cross axis would be
+              // horizontal).
+
+              children: <Widget>[
+                ListView(
+                  scrollDirection: Axis.horizontal,
+                  children: <Widget>[
+                    Column(
+                      children: <Widget>[
+                        Padding(padding: EdgeInsets.all(25)),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: <Widget>[
+                            Column(
+                              // ignore: prefer_const_literals_to_create_immutables
+                              children: <Widget>[
+                                Text(
+                                  'Team number: ',
+                                ),
+                                SizedBox(
+                                  width: 300.0,
+                                  child: TextField(
+                                    onChanged: (text) {
+                                      teamNumber = text;
+                                    },
+                                    controller: nameC,
+                                    decoration: InputDecoration(
+                                      border: OutlineInputBorder(),
+                                      hintText: 'Example (1086)',
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            Column(
+                              children: [
+                                Text("Score Defense (1-5)"),
+                                DropdownButton(
+                                    value: defensevalue,
+                                    items: items.map((String items) {
+                                      return DropdownMenuItem(
+                                        value: items,
+                                        child: Text(items),
+                                      );
+                                    }).toList(),
+                                    onChanged: (String? newValue) {
+                                      setState(() {
+                                        defensevalue = newValue!;
+                                      });
+                                    }),
+                              ],
+                            ),
+                            Column(
+                              children: [
+                                Text("Score Offense (1-5)"),
+                                DropdownButton(
+                                    value: offensevalue,
+                                    items: items.map((String items) {
+                                      return DropdownMenuItem(
+                                        value: items,
+                                        child: Text(items),
+                                      );
+                                    }).toList(),
+                                    onChanged: (String? newValue) {
+                                      setState(() {
+                                        offensevalue = newValue!;
+                                      });
+                                    }),
+                              ],
+                            ),
+                            Column(
+                              children: [
+                                SizedBox(
+                                  width: 200.0,
+                                  height: 100.0,
+                                  child: TextButton(
+                                    onPressed: (() {
+                                      String data =
+                                          "{\"teamNumber\": \"$teamNumber\",\"defenseScore\": \"$defensevalue\",\"offenseScore\": \"$offensevalue\",\"auto\": {\"autoMove\": \"$movedInAuto\",\"autoBottomScore\": \"$autoBottomScore\",\"autoMiddleScore\": \"$autoMiddleScore\",\"autoTopScore\": \"$autoTopScore\",\"autoDockedState\": \"$autoDockState\"},\"teleop\": {\"scoredBoth\": \"$scoredBoth\",\"teleopBottomScore\": \"$teleopBottomScore\",\"teleopMiddleScore\": \"$teleopMiddleScore\",\"teleopTopScore\": \"$teleopTopScore\",\"teleopDockState\": \"$endDockState\"}}";
+                                      readFile().then((String content) {
+                                        writeData('$content \n $data');
+                                      });
+                                      setState(() {
+                                        teleopTopScore = 0;
+                                        teleopMiddleScore = 0;
+                                        teleopBottomScore = 0;
+                                        autoTopScore = 0;
+                                        autoMiddleScore = 0;
+                                        autoBottomScore = 0;
+                                        movedInAuto = false;
+                                        scoredBoth = false;
+                                        defensevalue = "1";
+                                        offensevalue = "1";
+                                        autoDockState = "neither";
+                                        endDockState = "neither";
+                                        teamNumber = "";
+                                        nameC.text = teamNumber;
+                                      });
+                                      setState(() {
+                                        buttonMessage = "Success";
+                                      });
+                                      Future.delayed(const Duration(seconds: 1),
+                                          () {
+                                        setState(() {
+                                          buttonMessage = "Submit";
+                                        });
+                                      });
+                                    }),
+                                    child: Text(
+                                      buttonMessage,
+                                      style: TextStyle(fontSize: 30),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: <Widget>[
+                            Column(
+                              children: <Widget>[
+                                Padding(padding: EdgeInsets.all(25)),
+                                Text(
+                                  'Did the robot move in Auto',
+                                  style: TextStyle(fontSize: 20),
+                                ),
+                                Text(
+                                  autoMoveMessage,
+                                ),
+                                Switch(
+                                  value: movedInAuto,
+                                  onChanged: (bool value) {
+                                    setState(() => movedInAuto = value);
+                                    if (movedInAuto) {
+                                      autoMoveMessage = autoMoveConfirm;
+                                    } else {
+                                      autoMoveMessage = autoMoveDeny;
+                                    }
+                                  },
+                                ),
+                                Padding(padding: EdgeInsets.all(25)),
+                                Text(
+                                  'Did the robot dock in Auto',
+                                  style: TextStyle(fontSize: 20),
+                                ),
+                                DropdownButton(
+                                    value: autoDockState,
+                                    items: autoDockItems
+                                        .map((String autoDockItems) {
+                                      return DropdownMenuItem(
+                                        value: autoDockItems,
+                                        child: Text(autoDockItems),
+                                      );
+                                    }).toList(),
+                                    onChanged: (String? newValue) {
+                                      setState(() {
+                                        autoDockState = newValue!;
+                                      });
+                                    }),
+                              ],
+                            ),
+                            Column(
+                              children: <Widget>[
+                                Padding(padding: EdgeInsets.all(25)),
+                                Text(
+                                  'Pieces scored in Bottom in Auto',
+                                ),
+                                Text(
+                                  '$autoBottomScore',
+                                  style: TextStyle(fontSize: 30),
+                                ),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: <Widget>[
+                                    TextButton(
+                                      onPressed: () {
+                                        if (autoBottomScore > 0) {
+                                          setState(() {
+                                            autoBottomScore--;
+                                          });
+                                        }
+                                      },
+                                      child: Text("Decrease Score"),
+                                    ),
+                                    TextButton(
+                                      onPressed: () {
+                                        setState(() {
+                                          autoBottomScore++;
+                                        });
+                                      },
+                                      child: Text("Increase Score"),
+                                    ),
+                                  ],
+                                ),
+                                Padding(padding: EdgeInsets.all(25)),
+                                Text(
+                                  'Pieces scored in Middle in Auto',
+                                ),
+                                Text(
+                                  '$autoMiddleScore',
+                                  style: TextStyle(fontSize: 30),
+                                ),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: <Widget>[
+                                    TextButton(
+                                      onPressed: () {
+                                        if (autoMiddleScore > 0) {
+                                          setState(() {
+                                            autoMiddleScore--;
+                                          });
+                                        }
+                                      },
+                                      child: Text("Decrease Score"),
+                                    ),
+                                    TextButton(
+                                      onPressed: () {
+                                        setState(() {
+                                          autoMiddleScore++;
+                                        });
+                                      },
+                                      child: Text("Increase Score"),
+                                    ),
+                                  ],
+                                ),
+                                Padding(padding: EdgeInsets.all(25)),
+                                Text(
+                                  'Pieces scored in Top in Auto',
+                                ),
+                                Text(
+                                  '$autoTopScore',
+                                  style: TextStyle(fontSize: 30),
+                                ),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: <Widget>[
+                                    TextButton(
+                                      onPressed: () {
+                                        if (autoTopScore > 0) {
+                                          setState(() {
+                                            autoTopScore--;
+                                          });
+                                        }
+                                      },
+                                      child: Text("Decrease Score"),
+                                    ),
+                                    TextButton(
+                                      onPressed: () {
+                                        setState(() {
+                                          autoTopScore++;
+                                        });
+                                      },
+                                      child: Text("Increase Score"),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                            Column(
+                              children: <Widget>[
+                                Padding(padding: EdgeInsets.all(25)),
+                                Text(
+                                  'Pieces scored in Bottom in Teleop',
+                                ),
+                                Text(
+                                  '$teleopBottomScore',
+                                  style: TextStyle(fontSize: 30),
+                                ),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: <Widget>[
+                                    TextButton(
+                                      onPressed: () {
+                                        if (teleopBottomScore > 0) {
+                                          setState(() {
+                                            teleopBottomScore--;
+                                          });
+                                        }
+                                      },
+                                      child: Text("Decrease Score"),
+                                    ),
+                                    TextButton(
+                                      onPressed: () {
+                                        setState(() {
+                                          teleopBottomScore++;
+                                        });
+                                      },
+                                      child: Text("Increase Score"),
+                                    ),
+                                  ],
+                                ),
+                                Padding(padding: EdgeInsets.all(25)),
+                                Text(
+                                  'Pieces scored in Middle in Teleop',
+                                ),
+                                Text(
+                                  '$teleopMiddleScore',
+                                  style: TextStyle(fontSize: 30),
+                                ),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: <Widget>[
+                                    TextButton(
+                                      onPressed: () {
+                                        if (teleopMiddleScore > 0) {
+                                          setState(() {
+                                            teleopMiddleScore--;
+                                          });
+                                        }
+                                      },
+                                      child: Text("Decrease Score"),
+                                    ),
+                                    TextButton(
+                                      onPressed: () {
+                                        setState(() {
+                                          teleopMiddleScore++;
+                                        });
+                                      },
+                                      child: Text("Increase Score"),
+                                    ),
+                                  ],
+                                ),
+                                Padding(padding: EdgeInsets.all(25)),
+                                Text(
+                                  'Pieces scored in Top in Teleop',
+                                ),
+                                Text(
+                                  '$teleopTopScore',
+                                  style: TextStyle(fontSize: 30),
+                                ),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: <Widget>[
+                                    TextButton(
+                                      onPressed: () {
+                                        if (teleopTopScore > 0) {
+                                          setState(() {
+                                            teleopTopScore--;
+                                          });
+                                        }
+                                      },
+                                      child: Text("Decrease Score"),
+                                    ),
+                                    TextButton(
+                                      onPressed: () {
+                                        setState(() {
+                                          teleopTopScore++;
+                                        });
+                                      },
+                                      child: Text("Increase Score"),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                            Column(
+                              children: [
+                                Padding(padding: EdgeInsets.all(25)),
+                                Text(
+                                  'Did the robot score both Cube and Cone',
+                                  style: TextStyle(fontSize: 20),
+                                ),
+                                Text(
+                                  scoredMessage,
+                                ),
+                                Switch(
+                                  value: scoredBoth,
+                                  onChanged: (bool value) {
+                                    setState(() => scoredBoth = value);
+                                    if (scoredBoth) {
+                                      scoredMessage = scoredConfirm;
+                                    } else {
+                                      scoredMessage = scoredDeny;
+                                    }
+                                  },
+                                ),
+                                Padding(padding: EdgeInsets.all(25)),
+                                Text("Did the robot dock in endgame"),
+                                DropdownButton(
+                                    value: endDockState,
+                                    items: endDockItems.map((String items) {
+                                      return DropdownMenuItem(
+                                        value: items,
+                                        child: Text(items),
+                                      );
+                                    }).toList(),
+                                    onChanged: (String? newValue) {
+                                      setState(() {
+                                        endDockState = newValue!;
+                                      });
+                                    }),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        )); // This trailing comma makes auto-formatting nicer for build methods.
   }
 }
 
