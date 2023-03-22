@@ -95,10 +95,12 @@ class _MyHomePageState extends State<MyHomePage> {
   int autoTopScore = 0;
   int autoMiddleScore = 0;
   int autoBottomScore = 0;
+  int matchNumber = 1;
   bool movedInAuto = false;
   bool dockedInAuto = false;
   bool dockedInEndgame = false;
   bool scoredBoth = false;
+  bool tipped = false;
   String defensevalue = "1";
   String offensevalue = "1";
   String autoDockState = "neither";
@@ -108,12 +110,15 @@ class _MyHomePageState extends State<MyHomePage> {
 
   String autoMoveMessage = "Did not move in auto";
   String autoDockMessage = "Did not dock in auto";
+  String tipMessage = "The robot did not tip over";
   String endDockMessage = "Did not dock in endgame";
   String scoredMessage = "Did not score both Cone and Cube";
   final String autoMoveConfirm = "Moved in auto";
   final String autoMoveDeny = "Did not move in auto";
   final String scoredConfirm = "Scored both Cube and Cone";
   final String scoredDeny = "Did not score Cube and Cone";
+  final String tipConfirm = "The robot tipped";
+  final String tipDeny = "The robot did not tip over";
   final TextEditingController nameC = TextEditingController();
 
   var items = [
@@ -235,6 +240,32 @@ class _MyHomePageState extends State<MyHomePage> {
                                     }),
                               ],
                             ),
+                            Column(children: [
+                              Text(
+                                "Did the robot tip over",
+                                style: TextStyle(fontSize: 20),
+                              ),
+                              Text(tipMessage),
+                              Switch(
+                                  value: tipped,
+                                  onChanged: (bool value) {
+                                    setState(() => tipped = value);
+                                    if (tipped) {
+                                      tipMessage = tipConfirm;
+                                    } else {
+                                      tipMessage = tipDeny;
+                                    }
+                                  })
+                            ]),
+                            Column(
+                              children: [
+                                Text(
+                                  "Match number",
+                                ),
+                                Text("$matchNumber",
+                                    style: TextStyle(fontSize: 20)),
+                              ],
+                            ),
                             Column(
                               children: [
                                 SizedBox(
@@ -243,19 +274,29 @@ class _MyHomePageState extends State<MyHomePage> {
                                   child: TextButton(
                                     onPressed: (() {
                                       String data =
-                                          "{\"teamNumber\": \"$teamNumber\",\"defenseScore\": \"$defensevalue\",\"offenseScore\": \"$offensevalue\",\"auto\": {\"autoMove\": \"$movedInAuto\",\"autoBottomScore\": \"$autoBottomScore\",\"autoMiddleScore\": \"$autoMiddleScore\",\"autoTopScore\": \"$autoTopScore\",\"autoDockedState\": \"$autoDockState\"},\"teleop\": {\"scoredBoth\": \"$scoredBoth\",\"teleopBottomScore\": \"$teleopBottomScore\",\"teleopMiddleScore\": \"$teleopMiddleScore\",\"teleopTopScore\": \"$teleopTopScore\",\"teleopDockState\": \"$endDockState\"}}";
+                                          "{\"teamNumber\": \"$teamNumber\",\"defenseScore\": \"$defensevalue\",\"offenseScore\": \"$offensevalue\",\"tipped\": \"$tipped\",\"matchNum\": \"$matchNumber\",\"auto\": {\"autoMove\": \"$movedInAuto\",\"autoBottomScore\": \"$autoBottomScore\",\"autoMiddleScore\": \"$autoMiddleScore\",\"autoTopScore\": \"$autoTopScore\",\"autoDockedState\": \"$autoDockState\"},\"teleop\": {\"scoredBoth\": \"$scoredBoth\",\"teleopBottomScore\": \"$teleopBottomScore\",\"teleopMiddleScore\": \"$teleopMiddleScore\",\"teleopTopScore\": \"$teleopTopScore\",\"teleopDockState\": \"$endDockState\"}}";
                                       readFile().then((String content) {
-                                        writeData('$content \n $data');
+                                        if (content.isEmpty) {
+                                          writeData(
+                                              "{\"root\": [" + data + "]}");
+                                        } else {
+                                          content = content.substring(
+                                              0, content.length - 2);
+                                          writeData(
+                                              content + "," + data + "]}");
+                                        }
                                       });
                                       setState(() {
                                         teleopTopScore = 0;
                                         teleopMiddleScore = 0;
                                         teleopBottomScore = 0;
                                         autoTopScore = 0;
+                                        matchNumber++;
                                         autoMiddleScore = 0;
                                         autoBottomScore = 0;
                                         movedInAuto = false;
                                         scoredBoth = false;
+                                        tipped = false;
                                         defensevalue = "1";
                                         offensevalue = "1";
                                         autoDockState = "neither";
